@@ -58,7 +58,6 @@ After setting up the site with Netlify, you will have a CI/CD pipeline set up to
 
 
 
-
 ## Pass-through to original production site
 
 For a seamless experience for the site visitor, all requests that cannot be satisfied by this site are invisibly proxied through to the original production site at https://theunitedeffort.org/
