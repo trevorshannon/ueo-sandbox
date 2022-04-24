@@ -1,13 +1,6 @@
----
-layout: layouts/base.liquid
-title: Affordable housing database
-permalink: "/housing/affordable-housing/index.html"
-pageClass: "page-housing"
----
+module.exports = (data) => {
 
-<h1>Affordable housing database</h1>
-
-<form action="/housing/affordable-housing/search" action="get" id="housing-search">
+  return `<form action="/housing/affordable-housing/search" action="get" id="housing-search">
   <label for="city">City</label>
   <select name="city" id="city" multiple>
     <option value="">All cities</option>
@@ -30,12 +23,5 @@ pageClass: "page-housing"
 
   <input type="submit" value="Search" />
 </form>
-
-
-<ul>
-  {% for address in housingdatabase %}
-  <li>
-    <a href="/housing/affordable-housing/{{address.id}}">{{ address.apt_name }}</a>
-  </li>
-  {% endfor %}
-</ul> 
+`;
+}

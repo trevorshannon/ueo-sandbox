@@ -1,8 +1,10 @@
-var Airtable = require('airtable');
-var base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
+const Airtable = require('airtable');
+const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
+const pageTemplate = require("./includes/base.js");
+const searchForm = require("./includes/search-ui.js");
 
 
-// Lookup data for this query from the Airtable API
+// Look up data for this query from the Airtable API
 const fetchData = async(query) => {
   const table = base("tblNLrf8RTiZdY5KN"); // Units table
   return table.select({
@@ -28,20 +30,34 @@ const fetchData = async(query) => {
 };
 
 
+// Construct some HTML to show the results
+const renderResultItems = (data) => {
+
+  const resultItem = (item) => {
+    return `<li><a href="/housing/affordable-housing/${item.id[0]}">${ item.apt_name[0] }</a></li>`;
+  };
+
+  let resultsHTML = [];
+  data.forEach(element => {
+    resultsHTML.push(resultItem(element))
+  });
+  return `<ul>${resultsHTML.join("")}</ul>`;
+}
+
 
 
 exports.handler = async function(event) {
 
   const { city, unitType } = event.queryStringParameters;
 
+  // Construct our Airtable filter query.
+  // We'll concatenate an AND qunery with multiple ORs for each optio
   let parameters = [];
-
   if (unitType) {
     let rooms = unitType.split(",");
     let roomsQuery = rooms.map((x) => `{TYPE} = '${x}'`)
     parameters.push(`OR(${roomsQuery.join(",")})`);
   }
-
   if (city) {
     let cities = city.split(",");
     let cityQuery = cities.map((x) => `{City (from Housing)} = '${x}'`)
@@ -54,11 +70,11 @@ exports.handler = async function(event) {
 
   // query the DB
   let data = await fetchData(query);
+  const html = `<h1>Affordable housing database</h1>${searchForm()} ${renderResultItems(data)}`;
+
   return {
     statusCode: 200,
-    body: JSON.stringify(data),
-    headers: {
-      "Content-type": "application/json"
-    }
+    body: pageTemplate(html)
   };
+
 };

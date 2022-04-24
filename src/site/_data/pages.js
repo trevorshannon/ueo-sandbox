@@ -13,10 +13,7 @@ const fetchSection = (id) => {
       return record.get("Content");
     }
   });
-
 }
-
-
 
 
 // Fetch content for our pages from Airtable
