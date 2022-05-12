@@ -143,7 +143,43 @@ module.exports = function(eleventyConfig) {
     console.log("housing query: ");
     console.log(query);
     const queryStr = buildQueryStr(query);
-    let housing = await fetchHousingList(queryStr);
+    console.time("fetchHousingList");
+    let housingList = await fetchHousingList(queryStr);
+    console.timeEnd("fetchHousingList");
+
+    // Get a map from housing id to all associated unit type, status pairs.
+    console.time("post processing housingList");
+    console.time("map housing ids");
+    let typeById = {};
+    for (idx in housingList) {
+      let unitId = housingList[idx].id;
+      typeById[unitId] = typeById[unitId] || new Set();
+      typeById[unitId].add(JSON.stringify({
+        unitType: housingList[idx].units.unitType,
+        openStatus: housingList[idx].units.openStatus}));
+    }
+    console.timeEnd("map housing ids");
+
+    // Use the housingId:(unitType,openStatus) map to rewrite the units of each record
+    // to be a list of all the units at the property with housingId. This will result
+    // in some duplicate entries, but those will be filtered out next.
+    console.time("rewrite units");
+    for (idx in housingList) {
+      let unitsStrArray = [...typeById[housingList[idx].id]];
+      housingList[idx].units = unitsStrArray.map((x) => JSON.parse(x));
+    }
+    console.timeEnd("rewrite units");
+
+    // De-duplicate results which can be present if the same unit is offered
+    // at different rents for different income levels or if the same property has multiple 
+    // units on offer.
+    console.time("de-dupe units");
+    let housing = Array.from(
+      new Set(housingList.map((obj) => JSON.stringify(obj)))
+    ).map((string) => JSON.parse(string));
+    console.timeEnd("de-dupe units");
+    console.timeEnd("post processing housingList");
+
     console.log("got " + housing.length + " properties.")
     // if (query) {
     //   console.log(JSON.stringify(housing, null, 4));
@@ -234,6 +270,17 @@ module.exports = function(eleventyConfig) {
 
     return table.select({
         view: "API all units",
+        fields: [
+          "ID (from Housing)",
+          "APT_NAME",
+          "Address (from Housing)",
+          "City (from Housing)",
+          "TYPE",
+          "STATUS",
+          "LOC_COORDS (from Housing)",
+          "Phone (from Housing)",
+          "URL (from Housing)"
+          ],
         filterByFormula: queryStr
       })
       .all()
@@ -251,30 +298,7 @@ module.exports = function(eleventyConfig) {
           })
         });
 
-        // Get a map from housing id to all associated unit type, status pairs.
-        let typeById = {};
-        for (idx in housingList) {
-          let unitId = housingList[idx].id;
-          typeById[unitId] = typeById[unitId] || new Set();
-          typeById[unitId].add(JSON.stringify({
-            unitType: housingList[idx].units.unitType,
-            openStatus: housingList[idx].units.openStatus}));
-        }
-
-        // Use the housingId:(unitType,openStatus) map to rewrite the units of each record
-        // to be a list of all the units at the property with housingId. This will result
-        // in some duplicate entries, but those will be filtered out next.
-        for (idx in housingList) {
-          let unitsStrArray = [...typeById[housingList[idx].id]];
-          housingList[idx].units = unitsStrArray.map((x) => JSON.parse(x));
-        }
-
-        // De-duplicate results which can be present if the same unit is offered
-        // at different rents for different income levels or if the same property has multiple 
-        // units on offer.
-        return Array.from(
-          new Set(housingList.map((obj) => JSON.stringify(obj)))
-        ).map((string) => JSON.parse(string));
+        return housingList;
       });
   };
 
