@@ -7,6 +7,28 @@ permalink: /resources/index.html
 
 <h1>General Resources</h1>
 
+<script>
+function addNewField() {
+  let form = document.getElementById("test_form");
+  let newLabel = document.createElement("label");
+  let newInput = document.createElement("input");
+  newLabel.setAttribute("for", "new_field");
+  newLabel.innerHTML = "New Field";
+  newInput.setAttribute("type", "text");
+  newInput.setAttribute("id", "new_field");
+  newInput.setAttribute("name", "New_Field");
+  form.appendChild(newLabel);
+  form.appendChild(newInput);
+}
+</script>
+
+<form id="test_form" name="test_form" netlify>
+<label for="name">Name</label>
+<input type="text" id="name" name="Name"/>
+<button type="button" onclick="addNewField();">Add new field</button>
+<button type="submit">Submit</button>
+</form>
+
 {% assign category = resources | index: "Category" %}
 {% for city in category | sort %}
   {% assign links = resources | whereIncluded: "Category", city  %}
