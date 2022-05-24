@@ -5,10 +5,14 @@ const { EleventyServerless } = require("@11ty/eleventy");
 require("./eleventy-bundler-modules.js");
 
 async function handler(event) {
+  console.log(event);
   let elev = new EleventyServerless("serverless", {
     path: new URL(event.rawUrl).pathname,
     query: event.queryStringParameters,
     functionsDir: "./netlify/functions/",
+    config: function(config) {
+      config.addGlobalData("eventBody", event.body);
+    }
   });
   try {
     let [page] = await elev.getOutput();
