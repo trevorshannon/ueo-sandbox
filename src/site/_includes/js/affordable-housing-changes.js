@@ -154,7 +154,7 @@ function updateSecondAddressVisibility() {
 
 // Updates the heading for this unit to match the unit type selected.
 function updateUnitHeading() {
-  let heading = this.parentNode.parentNode.querySelector(".section_title");
+  let heading = this.parentNode.parentNode.parentNode.querySelector(".section_title");
   let unitTypeStr = "";
   if (this.value) {
     unitTypeStr = `: ${this.value}`;
@@ -164,7 +164,7 @@ function updateUnitHeading() {
 
 // Updates the heading for this rent offering to include the AMI % category.
 function updateOfferingHeading() {
-  let heading = this.parentNode.parentNode.querySelector(".section_title");
+  let heading = this.parentNode.parentNode.parentNode.querySelector(".section_title");
   let offeringStr = "";
   if (this.value) {
     offeringStr = `: ${this.value}% AMI`;
@@ -225,7 +225,7 @@ function updateAgeVisibility() {
 // Shows or hides maximum income table rows depending on the values
 // of min and max occupancy for the unit.
 function updateMaxIncomeRowsVisibility() {
-  let unitContainer = this.parentNode;
+  let unitContainer = this.parentNode.parentNode;
   let offeringContainers = unitContainer.querySelectorAll("fieldset");
   let minOccupancyField = unitContainer.querySelector("[name*=MIN_OCCUPANCY]");
   let maxOccupancyField = unitContainer.querySelector("[name*=MAX_OCCUPANCY]");
@@ -707,6 +707,27 @@ function addListeners() {
   }
 }
 
+function initFieldDisplay(data) {
+  if (data.queue.thisItem.fieldsToShow) {
+    // Begin by removing all fields.
+    let allFields = document.querySelectorAll(`[class*=_field_container]`);
+    for (let field of allFields) {
+      field.style.display = "none";
+    }
+    // Then add back in the fields requested.
+    // TODO: should this be the field ID?
+    let fieldsToShow = data.queue.thisItem.fieldsToShow.split(",");
+    for (let fieldName of fieldsToShow) {
+      fieldName = fieldName.trim();
+      let className = `${fieldName}_field_container`
+      let fields = document.querySelectorAll(`[class*=${className}]`);
+      for (let field of fields) {
+        field.style.display = "revert";
+      }
+    }
+  }
+}
+
 // Shows only enough units and offerings to fit the unit records in 'data'.
 // The 'data' passed in typically comes from Airtable via
 // fetchFormPrefillData().
@@ -764,6 +785,7 @@ function initPage(data, params) {
     document.getElementById("housing-changes").setAttribute("action",
       `/contrib/affordable-housing/thank-you?campaign=${safeCampaign}`);
     if (data.housing) {
+      initFieldDisplay(data);
       initUnitVisibility(data);
       prefillForm(data);
     } else if (params.housingId) {

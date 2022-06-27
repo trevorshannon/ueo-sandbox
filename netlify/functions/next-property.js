@@ -186,7 +186,8 @@ const fetchQueueData = async(campaign) => {
     Date.now() - (MAX_IN_PROGRESS_DURATION_HRS * 60 * 60 * 1000));
   let filterFormula = `{CAMPAIGN} = "${campaign}"`;
   return table.select({
-    fields: ["ID", "_DISPLAY_ID", "IN_PROGRESS_DATETIME", "COMPLETED_DATETIME"],
+    fields: ["ID", "_DISPLAY_ID", "IN_PROGRESS_DATETIME", "COMPLETED_DATETIME",
+      "FIELDS_TO_SHOW_FILTER"],
     filterByFormula: filterFormula,
     // Sort by management company to ensure that sequential properties
     // in the queue have similar-looking websites for easier data-hunting
@@ -222,6 +223,7 @@ const fetchQueueData = async(campaign) => {
       thisItem: {
         housingId: todo.length > 0 ? todo[0].get("_DISPLAY_ID")[0] : "",
         recordId: todo.length > 0 ? todo[0].id : "",
+        fieldsToShow: todo.length > 0 ? todo[0].get("FIELDS_TO_SHOW_FILTER") : "",
       },
     };
     return queueData;

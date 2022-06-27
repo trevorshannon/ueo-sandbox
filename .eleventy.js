@@ -296,24 +296,52 @@ module.exports = function(eleventyConfig) {
       name="${field.name}${indexStr}" ${options} ${classStr}>${content}${endtag}`;
   }
 
-  eleventyConfig.addShortcode("fieldLabel",
-      function(labelText, fields, fieldName) {
-    return fieldLabel(labelText, fields, fieldName);
+  eleventyConfig.addPairedShortcode("fieldContainer",
+      function(content, fields, fieldNames) {
+    fieldNames = fieldNames.split(",");
+    const fieldRegex = /FORM_FIELD_PLACEHOLDER: ({.*})/;
+    const labelRegex = /FIELD_LABEL_PLACEHOLDER: ({.*})/;
+    while (content.match(fieldRegex) !== null) {
+      let fieldMatch = content.match(fieldRegex);
+      let fieldParams = JSON.parse(fieldMatch[1]);
+      let formFieldName = fieldNames[0];
+      if (fieldParams.fieldName) {
+        formFieldName = fieldParams.fieldName;
+      }
+      // Replace form field placeholder.
+      content = content.replace(fieldRegex,
+      formField(fields, formFieldName, fieldParams.className, fieldParams.index));
+    }
+    while (content.match(labelRegex) !== null) {
+      let labelMatch = content.match(labelRegex);
+      let labelParams = JSON.parse(labelMatch[1]);
+      let labelFieldName = fieldNames[0];
+      if (labelParams.fieldName) {
+        labelFieldName = labelParams.fieldName;
+      }
+      // Replace field label placeholder.
+      content = content.replace(labelRegex,
+        fieldLabel(labelParams.labelText, fields, labelFieldName, labelParams.index));
+    }
+    let classStr = fieldNames.map(f => `${f}_field_container`).join(" ");
+    return `<div class="${classStr}">${content}</div>`;
   });
 
-  eleventyConfig.addShortcode("indexedFieldLabel", 
-      function(index, labelText, fields, fieldName) {
-    return fieldLabel(labelText, fields, fieldName, index);
+  eleventyConfig.addShortcode("fieldLabel", function(labelText, fieldName="") {
+    return `FIELD_LABEL_PLACEHOLDER: {"labelText": "${labelText}", "fieldName": "${fieldName}"}`;
   });
 
-  eleventyConfig.addShortcode("formField", 
-      function(fields, fieldName, className="") {
-    return formField(fields, fieldName, className);
+  eleventyConfig.addShortcode("indexedFieldLabel", function(index, labelText, fieldName="") {
+    return `FIELD_LABEL_PLACEHOLDER: {"index": "${index}", "labelText": "${labelText}", "fieldName": "${fieldName}"}`;
+  });
+
+  eleventyConfig.addShortcode("formField", function(className="", fieldName="") {
+    return `FORM_FIELD_PLACEHOLDER: {"className": "${className}", "fieldName": "${fieldName}"}`;
   });
 
   eleventyConfig.addShortcode("indexedFormField", 
-      function(index, fields, fieldName, className="") {
-    return formField(fields, fieldName, className, index);
+      function(index, className="", fieldName="") {
+    return `FORM_FIELD_PLACEHOLDER: {"index": "${index}", "className": "${className}", "fieldName": "${fieldName}"}`;
   });
 
   // Generates a rendered summary of affordable housing filter options.
@@ -357,7 +385,7 @@ module.exports = function(eleventyConfig) {
     console.log(query);
     let asset = new EleventyFetch.AssetCache("housing_results");
     let isBuild = !process.env.ELEVENTY_SERVERLESS && !query;
-    if (isBuild && asset.isCacheValid("1m")) {
+    if (isBuild && asset.isCacheValid("1d")) {
       console.log("Returning cached housing list.");
       let housing = await asset.getCachedValue();
       return housing;
