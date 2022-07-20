@@ -1,5 +1,7 @@
 # Website for The United Effort Organization
 
+example edit 
+
 https://theunitedeffort.org 
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/71dbec41-02ec-426b-be5a-b88aedb884df/deploy-status)](https://app.netlify.com/sites/ueo/deploys)
